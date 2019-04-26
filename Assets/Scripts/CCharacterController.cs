@@ -30,13 +30,15 @@ public class CCharacterController : MonoBehaviour
     }
 
     IEnumerator Dash()
-    {
+    {   
+        rigidbody.velocity = Vector2.zero;
         rigidbody.gravityScale = 0;
         dash = true;
         dashDir = direction;
         yield return new WaitForSeconds(0.1f);
         rigidbody.gravityScale = 5f;
         dash = false;
+        rigidbody.velocity = dashDir * 5f;
     }
 
     bool dash = false;
@@ -54,7 +56,7 @@ public class CCharacterController : MonoBehaviour
 
         if(isGrounded == true && Input.GetKeyDown(KeyCode.Z))
         {
-            
+            // Debug.Log("Jump");
             // rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpPower);
 
             Vector2 jumpDir = new Vector2(direction.x * (jumpPower / 2f), jumpPower);
@@ -70,14 +72,14 @@ public class CCharacterController : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.X))
         {
-            rigidbody.velocity = Vector2.zero;
+            
             StartCoroutine("Dash");
 
 
             // transform.position = Vector2.MoveTowards(transform.position, transform.position * direction, 10f * Time.deltaTime);
 
             // Vector2 jumpDir = new Vector2(direction.x * (jumpPower / 2f), jumpPower);
-            // rigidbody.AddForce(jumpDir, ForceMode2D.Impulse);
+           
         }
 
         if(distance > 0.04f)
@@ -114,16 +116,62 @@ public class CCharacterController : MonoBehaviour
     private void FixedUpdate() 
     {
         float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        direction.Set(h,v);
+            float v = Input.GetAxisRaw("Vertical");
+        if(!dash)
+        {
+            direction.Set(h,v);
+        }
+        
 
         if(isGrounded)
         {
+            // rigidbody.velocity = new Vector2(h * fSpeed, rigidbody.velocity.y);
+            // Vector2 move = new Vector2(h * fSpeed, rigidbody.velocity.y);
+            // rigidbody.MovePosition(rigidbody.position + move * Time.deltaTime);
+
+            
             rigidbody.velocity = new Vector2(h * fSpeed, rigidbody.velocity.y);
+            
         }
         else 
         {
-            rigidbody.AddForce(new Vector2(direction.x * fSpeed * 5f, rigidbody.velocity.y));
+            if(isJumping)
+            {
+
+                if(Input.GetKey(KeyCode.DownArrow))
+                {
+                    rigidbody.AddForce(new Vector2(h * fSpeed, -30f));
+                }
+                else
+                {
+                    rigidbody.AddForce(new Vector2(h * fSpeed, 0f));
+                }
+
+                // rigidbody.velocity = new Vector2(h * fSpeed / 2, rigidbody.velocity.y);
+
+                // rigidbody.MovePosition(rigidbody.position + move * Time.deltaTime);
+                // rigidbody.velocity = new Vector2(h * fSpeed, rigidbody.velocity.y);
+                
+                if(rigidbody.velocity.x >= 6f)
+                {
+                    rigidbody.velocity = new Vector2(6f, rigidbody.velocity.y);
+                }
+                else if(rigidbody.velocity.x <= -6f)
+                {
+                    rigidbody.velocity = new Vector2(-6f, rigidbody.velocity.y);
+                }
+                else 
+                {
+                    rigidbody.AddForce(new Vector2(h * fSpeed * 5f, rigidbody.velocity.y), ForceMode2D.Force);
+                }
+
+                if(rigidbody.velocity.y <= -8f)
+                {
+                    rigidbody.velocity = new Vector2(rigidbody.velocity.x, -8f);
+                }
+
+            }
+            
         }
 
         
