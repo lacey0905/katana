@@ -13,6 +13,7 @@ public class CController2D : MonoBehaviour
     public int verticalRayCount = 4;
 
     float maxClimbAngle = 80f;
+    float maxDescendAngle = 75f;
 
     float horizontalRaySpacing;
     float verticalRaySpacing;
@@ -36,6 +37,12 @@ public class CController2D : MonoBehaviour
     {
         UpdateRaycastOrigins();
         coliisions.Reset();
+        coliisions.velocityOld = velocity;
+
+        if(velocity.y < 0)
+        {
+            DescendSlope(ref velocity);
+        }
 
         if(velocity.x != 0)
         {
@@ -71,14 +78,34 @@ public class CController2D : MonoBehaviour
                 
                 if(i == 0 && slopeAngle <= maxClimbAngle)
                 {
+                    if(coliisions.descendingSlope)
+                    {
+                        coliisions.descendingSlope = false;
+                        velocity = coliisions.velocityOld;
+                    }
+                    float distanceToSlopeStart = 0;
+                    if(slopeAngle != coliisions.slopeAngleOld)
+                    {
+                        distanceToSlopeStart = hit.distance - skinWidth;
+                        velocity.x -= distanceToSlopeStart * directionX;
+                    }
                     ClimbSlope(ref velocity, slopeAngle);
+                    velocity.x += distanceToSlopeStart * directionX;
                 }
 
-                velocity.x = (hit.distance - skinWidth) * directionX;
-                rayLength = hit.distance;
+                if(!coliisions.climbingSlope || slopeAngle > maxClimbAngle)
+                {
+                    velocity.x = (hit.distance - skinWidth) * directionX;
+                    rayLength = hit.distance;
 
-                coliisions.left = directionX == -1;
-                coliisions.right = directionX == 1;
+                    if(coliisions.climbingSlope)
+                    {
+                        velocity.y = Mathf.Tan(coliisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(velocity.x);
+                    }
+
+                    coliisions.left = directionX == -1;
+                    coliisions.right = directionX == 1;
+                }
             }
         }
     }
@@ -102,8 +129,31 @@ public class CController2D : MonoBehaviour
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
 
+                if(coliisions.climbingSlope)
+                {
+                    velocity.x = velocity.y / Mathf.Tan(coliisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(velocity.x);
+                }
+
                 coliisions.below = directionY == -1;
                 coliisions.above = directionY == 1;
+            }
+        }
+        
+        if(coliisions.climbingSlope)
+        {
+            float directionX = Mathf.Sign(velocity.x);
+            rayLength = Mathf.Abs(velocity.x) + skinWidth;
+            Vector2 rayOrigin = ((directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight) + Vector2.up * *  velocity.y;
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+            if(hit)
+            {
+                float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+                if(slopeAngle != coliisions.slopeAngle)
+                {
+                    velocity.x = (hit.distance - skinWidth) * directionX;
+                    coliisions.slopeAngle = slopeAngle;
+                }
             }
         }
     }
@@ -111,8 +161,45 @@ public class CController2D : MonoBehaviour
     void ClimbSlope(ref Vector3 velocity, float slopeAngle)
     {
         float moveDistance = Mathf.Abs(velocity.x);
-        velocity.y = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * moveDistance;
-        velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+        float climbVelocityY =  Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * moveDistance;
+
+        if(velocity.y <= climbVelocityY)
+        {
+            velocity.y = climbVelocityY;
+            velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+            coliisions.below = true;
+            coliisions.climbingSlope = true;
+            coliisions.slopeAngle = slopeAngle;
+        }
+    }
+
+    void DescendSlope(ref Vector3 velocity)
+    {
+        float directionX = Mathf.Sign(velocity.x);
+        Vector2 rayOrigin = (directionX == -1) ? raycastOrigins.bottomRight : raycastOrigins.bottomLeft;
+        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, -Vector2.up, Mathf.Infinity, collisionMask);
+
+        if(hit)
+        {
+            float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+            if(slopeAngle != 0 && slopeAngle <= maxDescendAngle)
+            {
+                if(Mathf.Sign(hit.normal.x) == directionX)
+                {
+                    if(hit.distance - skinWidth <= Mathf.Tan(slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(velocity.x))
+                    {
+                        float moveDistance = Mathf.Abs(velocity.x);
+                        float descendVelocityY = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * moveDistance;
+                        velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+                        velocity.y -= descendVelocityY;
+
+                        coliisions.slopeAngle = slopeAngle;
+                        coliisions.descendingSlope = true;
+                        coliisions.below = true;
+                    }
+                }
+            }
+        }
     }
 
     void UpdateRaycastOrigins()
@@ -149,11 +236,20 @@ public class CController2D : MonoBehaviour
         public bool above, below;
         public bool left, right;
 
+        public bool climbingSlope;
+        public bool descendingSlope;
+        public float slopeAngle, slopeAngleOld;
+        public Vector3 velocityOld;
+
         public void Reset()
         {
             above = below = false;
             left = right = false;
-
+            climbingSlope = false;
+            descendingSlope = false;
+            
+            slopeAngleOld = slopeAngle;
+            slopeAngle = 0f;
         }
     }
 }
