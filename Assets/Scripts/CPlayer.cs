@@ -6,8 +6,16 @@ using UnityEngine;
 public class CPlayer : MonoBehaviour
 {
 
+    // 점프 높이
     public float jumpHeight = 4.0f;
+    // 점프 유지 시간
     public float timeToJumpApex = 0.4f;
+
+    /// <summary>
+    /// d = vit + at^2 / 2
+    /// jumpHeight(점프거리) = gravity(초기속도) * timeToJumpApex^2(점프 유지 시간^2) / 2
+    /// gravity = 2 * jumpHeight / timeToJumpApex^2
+    /// </summary>
 
     float accelerationTimeAirborne = 0.2f;
     float accelerationTimeGrounded = 0.1f;

@@ -7,18 +7,24 @@ public class CController2D : MonoBehaviour
 {   
 
     public LayerMask collisionMask;
-
+    
+    // 콜라이더가 겹칠 수 있는 범위 -> 여백이 없으면 움직이지 못함
     const float skinWidth = 0.015f;
+
+    // 레이를 가로, 세로 몇개로 지정 할 것인가
     public int horizontalRayCount = 4;
     public int verticalRayCount = 4;
+
+    // 레이 발사 지점 간격
+    float horizontalRaySpacing;
+    float verticalRaySpacing;
 
     float maxClimbAngle = 80f;
     float maxDescendAngle = 75f;
 
-    float horizontalRaySpacing;
-    float verticalRaySpacing;
-
+    // 콜라이더
     BoxCollider2D collider;
+    // 레이 발사 시작 지점
     RaycastOrigins raycastOrigins;
 
     public ColiisionInfo coliisions;
@@ -66,6 +72,7 @@ public class CController2D : MonoBehaviour
         for (int i = 0; i < horizontalRayCount; i++)
         {
             Vector2 rayOrigin = (directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight;
+
             rayOrigin += Vector2.up * (horizontalRaySpacing * i);
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
 
@@ -143,7 +150,7 @@ public class CController2D : MonoBehaviour
         {
             float directionX = Mathf.Sign(velocity.x);
             rayLength = Mathf.Abs(velocity.x) + skinWidth;
-            Vector2 rayOrigin = ((directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight) + Vector2.up * *  velocity.y;
+            Vector2 rayOrigin = ((directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight) + Vector2.up *  velocity.y;
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
 
             if(hit)
@@ -202,33 +209,45 @@ public class CController2D : MonoBehaviour
         }
     }
 
+    // 레이 발사 지점 좌표 구조체
+    struct RaycastOrigins 
+    {
+        public Vector2 topLeft, topRight;
+        public Vector2 bottomLeft, bottomRight;
+    }
+
+    /// <summary>
+    /// 레이는 월드 좌표로 쏘니까 플레이어가 움직이면 레이 시작 지점도 갱신해야함
+    /// </summary>
     void UpdateRaycastOrigins()
     {
+        // 콜라이더가 겹칠만큼의 여백을 줌
         Bounds bounds = collider.bounds;
         bounds.Expand(skinWidth * -2);
 
+        // 레이 시작 지점을 콜라이더의 꼭지점 좌표로 지정 -> 콜라이더는 GameObject를 따라 다니니깐
         raycastOrigins.bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
         raycastOrigins.bottomRight = new Vector2(bounds.max.x, bounds.min.y);
         raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max. y);
         raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
     }
 
+    // 레이를 가로, 세로 몇개 발사 할지 계산
     void CalculateRaySpacing()
     {
+        // 발사 지점이 여백만큼 더 벌어져야 하니까
         Bounds bounds = collider.bounds;
         bounds.Expand(skinWidth * -2);
         
+        // 최소는 2개이고 무한대로 늘리게 함
         horizontalRayCount = Mathf.Clamp(horizontalRayCount, 2, int.MaxValue);
         verticalRayCount = Mathf.Clamp(verticalRayCount, 2, int.MaxValue);
 
+        // 레이 발사지점 계산
+        // 콜라이더 사이즈 / (카운트-1) = 
+        // ex) 1 / 3 = 0.3333 -> 0.3333 마다 시작지점 설치하게 함
         horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
-    }
-
-    struct RaycastOrigins 
-    {
-        public Vector2 topLeft, topRight;
-        public Vector2 bottomLeft, bottomRight;
     }
 
     public struct ColiisionInfo
