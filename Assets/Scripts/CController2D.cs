@@ -9,6 +9,7 @@ public class CController2D : MonoBehaviour
     public LayerMask collisionMask;
     
     // 콜라이더가 겹칠 수 있는 범위 -> 여백이 없으면 움직이지 못함
+    // 자세히 알아봐야함
     const float skinWidth = 0.015f;
 
     // 레이를 가로, 세로 몇개로 지정 할 것인가
@@ -119,21 +120,30 @@ public class CController2D : MonoBehaviour
 
     void VerticalCollisions(ref Vector3 velocity)
     {
+        // Sign = 부호를 반환함 0이상이면 +1, -1이하면 -1을 반환
         float directionY = Mathf.Sign(velocity.y);
+        // 레이의 길이를 찾음
         float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
         // isGround 구현, Ground에서 멈추는 방법 (이해 할 때 까지 봐야함)
         for (int i = 0; i < verticalRayCount; i++)
         {
+            // 레이 발사 위치 찾기, +면 위, -면 아래
+            // 콜라이더 bounds position 찾아서 저장
             Vector2 rayOrigin = (directionY == -1) ? raycastOrigins.bottomLeft : raycastOrigins.topLeft;
+            
+            // 레이 간격 기준으로 점 갯수 만큼 설치함
             rayOrigin += Vector2.right * (verticalRaySpacing * i + velocity.x);
-            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
 
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
+            
             Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
 
+            // 
             if(hit)
             {
                 velocity.y = (hit.distance - skinWidth) * directionY;
+                
                 rayLength = hit.distance;
 
                 if(coliisions.climbingSlope)
@@ -252,6 +262,7 @@ public class CController2D : MonoBehaviour
 
     public struct ColiisionInfo
     {
+        // 그라운드 체크
         public bool above, below;
         public bool left, right;
 

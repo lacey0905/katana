@@ -27,6 +27,7 @@ public class CPlayer : MonoBehaviour
     Vector3 velocity;
     float velocityXSmoothing;
 
+
     CController2D controller;
 
 
@@ -36,10 +37,13 @@ public class CPlayer : MonoBehaviour
 
     void Start()
     {
-        // 점프 중력 구하는 수식 : 복습해야함
+        // 점프 Height에 따른 중력
+        // Vi = 2Jump / t^2
         gravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+
+        // 중력에 따른 점프 속도
+        // vf = vi + at; -> vi가 0임
         jumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
-        Debug.Log("Gravity : " + gravity + "Jump Velocity : " + jumpVelocity);
     }
 
     void Update()
@@ -58,8 +62,11 @@ public class CPlayer : MonoBehaviour
         }
 
         float targetVelocityX = input.x * moveSpeed;
+        // 해석 필요함
         velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, (controller.coliisions.below) ? accelerationTimeGrounded : accelerationTimeAirborne);
+        // velocity.x = targetVelocityX;
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+
     }
 }
