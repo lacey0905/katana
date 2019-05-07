@@ -30,20 +30,40 @@ public class CCharacterManager : MonoBehaviour
 	
 	void Update () 
 	{
-		if(controller.collisions.above || controller.collisions.below)
-        {
-            velocity.y = 0;
-        }
 
 		Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+		if(controller.collisions.above)
+        {
+            velocity.y = 0;
+			velocity.x = input.x * moveSpeed;
+			Debug.Log(controller.collisions.above);
+        }
+		
+		
+
+		// Debug.Log(controller.collisions.below);
+
+		if(controller.collisions.below)
+		{
+			
+		}
+		// else 
+		// {
+		// 	
+		// }
 
 		if (Input.GetKeyDown(KeyCode.Z))
         {
             velocity.y = jumpVelocity;
+			
+			if(input.x != 0)
+			{
+				velocity.x = 10f * input.x;
+			}
         }
 
 		velocity.y += gravity * Time.deltaTime;
-
 		controller.Move(velocity * Time.deltaTime);
 		
 	}

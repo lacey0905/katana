@@ -21,8 +21,8 @@ public class CController : MonoBehaviour
 	{
 
 		UpdateRaycastOrigins();
-		collisions.Reset();
-        collisions.velocityOld = velocity;
+		// collisions.Reset();
+        // collisions.velocityOld = velocity;
 
 		if(velocity.y != 0)
 		{
@@ -42,7 +42,7 @@ public class CController : MonoBehaviour
 
 	void VerticalCollisions(ref Vector3 velocity)
 	{
-
+		
 		float directionY = Mathf.Sign(velocity.y);
 		float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
@@ -51,10 +51,9 @@ public class CController : MonoBehaviour
 		RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
 		
 		Debug.DrawRay(rayOrigin, Vector2.up * directionY * 1f, Color.red);
-		Debug.Log(rayLength);
+
 		if(hit)
 		{
-			
 			velocity.y = (hit.distance - skinWidth) * directionY;
 
 			rayLength = hit.distance;
