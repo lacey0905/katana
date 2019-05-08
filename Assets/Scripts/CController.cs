@@ -44,6 +44,11 @@ public class CController : MonoBehaviour
 	{
 		
 		float directionY = Mathf.Sign(velocity.y);
+
+		Debug.Log(velocity.y);
+
+		collisions.above = directionY == 1;
+
 		float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
 		Vector2 rayOrigin = (directionY == -1) ? raycastOrigins.bottomLeft : raycastOrigins.topLeft;
@@ -52,15 +57,30 @@ public class CController : MonoBehaviour
 		
 		Debug.DrawRay(rayOrigin, Vector2.up * directionY * 1f, Color.red);
 
+
+		
+		
 		if(hit)
 		{
-			velocity.y = (hit.distance - skinWidth) * directionY;
 
+			collisions.isGround = directionY == 1;
+
+			
+
+
+			velocity.y = (hit.distance - skinWidth) * directionY;
 			rayLength = hit.distance;
 
-			collisions.below = directionY == -1;
-			collisions.above = directionY == 1;
+			collisions.below = directionY == 1;
+			// collisions.above = directionY == 1;
 
+		}
+		else
+		{
+			if(directionY == 1)
+			{
+				collisions.isGround = false;
+			}
 		}
 	}
 
@@ -80,6 +100,9 @@ public class CController : MonoBehaviour
 
 	public struct CollisionInfo
     {
+
+		public bool isGround;
+
         // 그라운드 체크
         public bool above, below;
         public bool left, right;

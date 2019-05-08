@@ -33,17 +33,16 @@ public class CCharacterManager : MonoBehaviour
 
 		Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-		if(controller.collisions.above)
+		if(controller.collisions.isGround)
         {
             velocity.y = 0;
 			velocity.x = input.x * moveSpeed;
-			Debug.Log(controller.collisions.above);
         }
+
 		
 		
 
-		// Debug.Log(controller.collisions.below);
-
+		
 		if(controller.collisions.below)
 		{
 			
