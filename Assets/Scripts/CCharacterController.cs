@@ -10,8 +10,6 @@ public class CCharacterController : MonoBehaviour
     public bool isGround;
     public LayerMask groundLayers;
 
-    float skinWidth = 0.015f;
-
     BoxCollider2D collider;
     RaycastOrigins raycastOrigins;
 
@@ -21,69 +19,40 @@ public class CCharacterController : MonoBehaviour
         rigidbody = GetComponent<Rigidbody2D>();
     }
 
-    void Update()
-    {
 
-    }
+    public Vector3 velocity = Vector3.zero;
+    public float fSpeed = 5.0f;
+    public float jumpPower = 10f;
 
-    void FixedUpdate() 
+    void Update() 
     {
         UpdateRaycastOrigins();
-        // VerticalCollisions(rigidbody.velocity);
-        // isGround = Physics2D.OverlapArea(raycastOrigins.bottomLeft, raycastOrigins.bottomRight, groundLayers);
-        // if(isGround)
-        // {
-        //     rigidbody.gravityScale = 0f;
-        //     rigidbody.velocity = Vector2.zero;
-        // }
-        // else
-        // {
-        //     rigidbody.gravityScale = 2f;
-        // }
+        isGround = Physics2D.OverlapArea(raycastOrigins.bottomLeft, raycastOrigins.bottomRight, groundLayers);
 
-        
-        
+        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        velocity = new Vector3(rigidbody.velocity.x, rigidbody.velocity.y, 0f);
+
+        velocity.x = input.x * fSpeed;
+        rigidbody.velocity = velocity;
+
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            Debug.Log("Jump");
+            if(isGround)
+            {
+                rigidbody.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.X))
+        {
+            Debug.Log("Dash");
+            rigidbody.velocity = Vector2.zero;
+            rigidbody.AddForce(input.normalized * jumpPower, ForceMode2D.Impulse);
+        }
+
     }
-
-    // private void OnCollisionEnter2D(Collision2D other) {
-    // }
-
-    // private void OnTriggerEnter2D(Collider2D other) {
-        
-    // }
-
-    // private void OnTriggerStay2D(Collider2D other) {
-    //     rigidbody.gravityScale = 0f;
-    //     rigidbody.velocity = Vector2.zero;
-    // }
-
-    // private void OnTriggerExit2D(Collider2D other) {
-        
-    // }
-
-
-    // void VerticalCollisions(Vector3 velocity)
-	// {
-
-        
-
-	// 	float directionY = Mathf.Sign(velocity.y);
-	// 	float rayLength = Mathf.Abs(velocity.y) + skinWidth;
-
-	// 	Vector2 rayOrigin = (directionY == -1) ? raycastOrigins.bottomLeft : raycastOrigins.topLeft;
-		
-	// 	RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, 0.5f, groundLayers);
-		
-	// 	Debug.DrawRay(rayOrigin, Vector2.up * directionY * 0.5f, Color.red);
-		
-	// 	if(hit)
-	// 	{   
-    //         Debug.Log(velocity);
-    //         Vector2 newVelocity = new Vector2(rigidbody.velocity.x, 0f);
-	// 		rigidbody.velocity = newVelocity;
-	// 		rayLength = hit.distance;
-	// 	}
-	// }
 
     struct RaycastOrigins
 	{
@@ -94,8 +63,6 @@ public class CCharacterController : MonoBehaviour
     void UpdateRaycastOrigins()
 	{
 		Bounds bounds = collider.bounds;
-		// bounds.Expand(skinWidth * -2);
-
 		raycastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y);
 		raycastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
 		raycastOrigins.bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
@@ -103,10 +70,8 @@ public class CCharacterController : MonoBehaviour
 
 	}
 
-
-
     void OnDrawGizmos() {
-        Gizmos.color = new Color(0,1, 0, 0.5f);
+        Gizmos.color = new Color(1f,0, 0, 1f);
         Gizmos.DrawCube(new Vector2(transform.position.x, transform.position.y - 0.505f), new Vector2(1, 0.01f));    
     }
 }
